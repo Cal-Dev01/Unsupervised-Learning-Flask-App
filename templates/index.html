@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Unsupervised Learning Demo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Upload CSV to Cluster Data</h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="file">CSV File</label>
+                                <input type="file" class="form-control" id="file" name="file" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">Upload</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Graph</h3>
+                    </div>
+                    <div class="card-body text-center">
+                        <img id="graph" src="#" alt="Graph will be displayed here" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Cluster Analysis</h3>
+                    </div>
+                    <div class="card-body">
+                        <p id="cluster-analysis">Cluster analysis will be displayed here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const uploadForm = document.querySelector('#upload-form');
+            uploadForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const formData = new FormData(uploadForm);
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.graph_url) {
+                        document.getElementById('graph').src = data.graph_url;
+                    }
+                    if (data.cluster_counts) {
+                        let analysisText = 'Cluster Counts:<br>';
+                        for (const [cluster, count] of Object.entries(data.cluster_counts)) {
+                            analysisText += `Cluster ${cluster}: ${count} points<br>`;
+                        }
+                        analysisText += '<br>Centroids:<br>';
+                        data.centroids.forEach((centroid, index) => {
+                            analysisText += `Cluster ${index}: Size ${centroid[0].toFixed(2)}, Sound ${centroid[1].toFixed(2)}<br>`;
+                        });
+                        document.getElementById('cluster-analysis').innerHTML = analysisText;
+                    } else {
+                        alert(data.error || data.message);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>
